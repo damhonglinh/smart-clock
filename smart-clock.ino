@@ -43,8 +43,6 @@ void fetchWithHttp(const char* url) {
   if (httpCode > 0) {
     Serial.printf("[HTTP] GET... code: %d\n", httpCode);
 
-    if (httpCode == HTTP_CODE_OK) {
-    }
     String payload = http.getString();
     Serial.println(payload);
   } else {
