@@ -84,10 +84,6 @@ void ledRed()   { ledColor(255, 0, 0); }
 void ledGreen() { ledColor(0, 255, 0); }
 void ledBlue()  { ledColor(0, 0, 255); }
 
-int readLDR() {
-  return analogRead(LDR_PIN);
-}
-
 
 void connectWifi() {
   ESP8266WiFiMulti WiFiMulti;
