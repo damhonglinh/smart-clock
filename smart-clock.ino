@@ -27,13 +27,14 @@ void loop() {
   Serial.println("Looping...");
   ledGreen();
   yield();
-  fetchWithHttp(host);
+  httpGet(host);
+  // httpPost(host);
   delay(10000);
 }
 
 // ==========================================================================
 
-void fetchWithHttp(const char* url) {
+void httpGet(const char* url) {
   Serial.println("[HTTP] begin...");
 
   HTTPClient http;
@@ -52,6 +53,15 @@ void fetchWithHttp(const char* url) {
 
   http.end();
 }
+
+// void httpPost(const char* url) {
+//   HTTPClient http;
+//   http.begin(url, fingerPrint);
+//   http.addHeader("Content-Type", "application/x-www-form-urlencoded");
+//   http.POST("title=foo&body=bar&userId=1");
+//   http.writeToStream(&Serial);
+//   http.end();
+// }
 
 
 void ledColor(int red, int green, int blue) {
