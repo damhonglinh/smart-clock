@@ -12,6 +12,7 @@
 const char* ssid = "Microsoft";
 const char* password = "password";
 const char* host = "https://judgelinh.ngrok.io/";
+const char* fingerPrint = "32 D1 EC 69 40 D3 4E 76 F8 32 89 4E 0C 4F 1C 62 2B AC 49 D9";
 bool onOff = true;
 
 void setup() {
@@ -26,32 +27,29 @@ void loop() {
   Serial.println("Looping...");
   ledGreen();
   yield();
-  fetchWithHttp(host, "/");
+  fetchWithHttp(host);
   delay(10000);
 }
 
+// ==========================================================================
 
-void fetchWithHttp(const char* host, String url) {
+void fetchWithHttp(const char* url) {
   Serial.println("[HTTP] begin...");
 
   HTTPClient http;
-  http.begin(host, "32 D1 EC 69 40 D3 4E 76 F8 32 89 4E 0C 4F 1C 62 2B AC 49 D9");
-
-  Serial.println("[HTTP] GET...");
-
+  http.begin(url, fingerPrint);
   int httpCode = http.GET();
 
-  // httpCode will be negative on error
   if (httpCode > 0) {
-    // HTTP header has been send and Server response header has been handled
     Serial.printf("[HTTP] GET... code: %d\n", httpCode);
 
     if (httpCode == HTTP_CODE_OK) {
-      String payload = http.getString();
-      Serial.println(payload);
     }
+    String payload = http.getString();
+    Serial.println(payload);
   } else {
-    Serial.printf("[HTTP] GET... failed, error: %s\n", http.errorToString(httpCode).c_str());
+    Serial.printf("Failed, ERROR: %s\n", http.errorToString(httpCode).c_str());
+    ledRed();
   }
 
   http.end();
