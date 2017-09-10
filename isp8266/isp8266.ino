@@ -27,7 +27,7 @@ const char* fingerPrint = "32 D1 EC 69 40 D3 4E 76 F8 32 89 4E 0C 4F 1C 62 2B AC
 bool onOff = true;
 
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(9600);
   pinMode(RED_PIN, OUTPUT);
   pinMode(BLUE_PIN, OUTPUT);
   pinMode(GREEN_PIN, OUTPUT);
@@ -124,5 +124,3 @@ void connectWifi() {
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
 }
-
-
