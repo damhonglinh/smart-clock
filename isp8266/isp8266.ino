@@ -35,12 +35,12 @@ void setup() {
 }
 
 void loop() {
-  Serial.println("Looping...");
+  Serial.println("Looping ...... Looping ......");
   ledGreen();
   yield();
   httpGet(host);
   // httpPost(host);
-  delay(5000);
+  blinkLedAndIdle();
 }
 
 // ==========================================================================
@@ -67,6 +67,15 @@ void httpGet(const char* url) {
   }
 
   http.end();
+}
+
+void blinkLedAndIdle() {
+  for (int i= 0; i <= 8; i++){
+    ledBlue();
+    delay(400);
+    ledColor(255, 0, 165); // pink or purple
+    delay(400);
+ }
 }
 
 // void httpPost(const char* url) {
@@ -114,7 +123,7 @@ void connectWifi() {
   WiFiMulti.addAP(ssid, password);
 
   while (WiFiMulti.run() != WL_CONNECTED) {
-    ledColor(225, 0 , 225); // purple
+    ledColor(225, 165 , 0); // orange
     delay(500);
   }
 
