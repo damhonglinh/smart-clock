@@ -1,19 +1,36 @@
-/*
-  Blink
-  Turns on an LED on for one second, then off for one second, repeatedly.
+// Basic serial communication with ESP8266
+// Uses serial monitor for communication with ESP8266
+//
+//  Pins
+//  Arduino pin 2 (RX) to ESP8266 TX
+//  Arduino pin 3 to voltage divider then to ESP8266 RX
+//  Connect GND from the Arduiono to GND on the ESP8266
+//  Pull ESP8266 CH_PD HIGH
+//
+// When a command is entered in to the serial monitor on the computer
+// the Arduino will relay it to the ESP8266
+//
 
-  This example code is in the public domain.
- */
+#include <SoftwareSerial.h>
+SoftwareSerial ESPserial(2, 3); // RX | TX
 
 void setup() {
-  // initialize the digital pin as an output.
-  // Pin 13 has an LED connected on most Arduino boards:
-  pinMode(13, OUTPUT);
+  Serial.begin(9600);     // communication with the host computer
+  //while (!Serial)   { ; }
+
+  // Start the software serial for communication with the ESP8266
+  ESPserial.begin(115200);
+
+  Serial.println("");
+  Serial.println("Remember to to set Both NL & CR in the serial monitor.");
+  Serial.println("Ready");
+  Serial.println("");
 }
 
 void loop() {
-  digitalWrite(13, HIGH);   // set the LED on
-  delay(1000);              // wait for a second
-  digitalWrite(13, LOW);    // set the LED off
-  delay(1000);              // wait for a second
+  // listen for communication from the ESP8266 and then write it to the serial monitor
+  if ( ESPserial.available() )   {  Serial.write( ESPserial.read() );  }
+
+  // listen for user input and send it to the ESP8266
+  if ( Serial.available() )       {  ESPserial.write( Serial.read() );  }
 }
