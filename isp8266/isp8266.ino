@@ -1,3 +1,13 @@
+// TODO
+// + Blink led
+// + Integrate Wunderlist
+// + https://theysaidso.com/api/
+
+// Then:
+// + Show in the LCD + Arduino
+
+
+
 #include <ESP8266WiFi.h>
 #include <ESP8266WiFiMulti.h>
 #include <ESP8266HTTPClient.h>
@@ -114,4 +124,5 @@ void connectWifi() {
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
 }
+
 
