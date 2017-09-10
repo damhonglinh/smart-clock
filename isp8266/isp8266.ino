@@ -56,10 +56,11 @@ void httpGet(const char* url) {
     Serial.printf("[HTTP] GET... code: %d\n", httpCode);
 
     String payload = http.getString();
-    const char* quoteText = parseJson(payload, "quoteText");
+    yield();
+    parseJson(payload, "quoteText");
 
     Serial.println(payload);
-    Serial.println(quoteText);
+    Serial.println();
 
   } else {
     Serial.printf("Failed, ERROR: %s\n", http.errorToString(httpCode).c_str());
@@ -73,7 +74,7 @@ void blinkLedAndIdle() {
   for (int i= 0; i <= 8; i++){
     ledBlue();
     delay(400);
-    ledColor(255, 0, 165); // pink or purple
+    ledColor(255, 0, 255); // pink or purple
     delay(400);
  }
 }
@@ -114,7 +115,9 @@ const char* parseJson(String& json, const char* key) {
   if (!root.success()) {
     Serial.println("parseJson() failed");
   }
-  return root[key];
+  const char* result = root[key];
+  Serial.println(result);
+  return result; // NOTE: chars returned here don't work
 }
 
 
