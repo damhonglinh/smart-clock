@@ -60,6 +60,7 @@ void httpGet(const char* url) {
     parseJson(payload, "quoteText");
 
     Serial.println(payload);
+    yield();
     Serial.println();
 
   } else {
