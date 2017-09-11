@@ -28,8 +28,7 @@ void loop() {
   ledGreen();
   yield();
   httpGet(host);
-  // httpPost(host);
-  blinkLedAndIdle();
+  blinkLed(0, 0, 255, 500, 7); // blue
 }
 
 // ==========================================================================
@@ -43,22 +42,13 @@ void httpGet(const char* url) {
     String payload = http.getString();
     yield();
     parseJson(payload, "quoteText");
-    yield();
+    blinkLed(0, 255, 0, 100, 7);
   } else {
     Serial.printf("Failed, ERROR: %s\n", http.errorToString(httpCode).c_str());
-    ledRed();
+    blinkLed(255, 0, 0, 200, 10);
   }
 
   http.end();
-}
-
-void blinkLedAndIdle() {
-  for (int i= 0; i <= 8; i++){
-    ledBlue();
-    delay(400);
-    ledColor(255, 0, 255); // pink or purple
-    delay(400);
- }
 }
 
 // void httpPost(const char* url) {
@@ -85,6 +75,15 @@ void ledOff() {
   analogWrite(RED_PIN, 0);
   analogWrite(GREEN_PIN, 0);
   analogWrite(BLUE_PIN, 0);
+}
+
+void blinkLed(int red, int green, int blue, int timeout, int repeat) {
+  for (int i = 0; i <= repeat; i++) {
+    ledColor(red, green, blue);
+    delay(timeout);
+    ledOff();
+    delay(timeout);
+ }
 }
 
 void ledRed()   { ledColor(255, 0, 0); }
