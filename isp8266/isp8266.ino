@@ -1,13 +1,3 @@
-// TODO
-// + Blink led
-// + Integrate Wunderlist
-// + https://theysaidso.com/api/
-
-// Then:
-// + Show in the LCD + Arduino
-
-
-
 #include <ESP8266WiFi.h>
 #include <ESP8266WiFiMulti.h>
 #include <ESP8266HTTPClient.h>
@@ -35,7 +25,6 @@ void setup() {
 }
 
 void loop() {
-  Serial.println("Looping ...... Looping ......");
   ledGreen();
   yield();
   httpGet(host);
@@ -46,23 +35,15 @@ void loop() {
 // ==========================================================================
 
 void httpGet(const char* url) {
-  Serial.println("[HTTP] begin...");
-
   HTTPClient http;
   http.begin(url);
   int httpCode = http.GET();
 
   if (httpCode > 0) {
-    Serial.printf("[HTTP] GET... code: %d\n", httpCode);
-
     String payload = http.getString();
     yield();
     parseJson(payload, "quoteText");
-
-    Serial.println(payload);
     yield();
-    Serial.println();
-
   } else {
     Serial.printf("Failed, ERROR: %s\n", http.errorToString(httpCode).c_str());
     ledRed();
@@ -137,3 +118,12 @@ void connectWifi() {
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
 }
+
+
+
+// TODO
+// + Integrate Wunderlist
+// + https://theysaidso.com/api/
+
+// Then:
+// + Show in the LCD + Arduino
