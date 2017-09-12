@@ -3,8 +3,13 @@
 #include <LCD.h>
 #include <LiquidCrystal_I2C.h>
 
+#define LCD_LEN 16
+#define CHAR_COUNT_TO_SLIDE_PER_LCD_BLINK 4
+#define LCD_BLINK_INTERVAL 550
+
 SoftwareSerial ESPserial(2, 3); // RX | TX
 LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7); // 0x27 is the I2C bus address for an unmodified backpack
+// String currentText;
 
 void setup() {
   Serial.begin(9600);     // communication with the host computer
@@ -24,10 +29,46 @@ void loop() {
     Serial.println(wifiInput);
   }
 
-  lcd.setCursor(0,0);
-  lcd.print(wifiInput);
 
-  lcd.setCursor(0,1);
-  lcd.print("Hi back!");
-  delay(2000);
+  lcdPrintLongLine(wifiInput, 0);
+  delay(1000);
+}
+
+
+// ========== LCD ===========
+
+void lcdPrintLongLine(String str, int lcdLine) {
+  String subStr;
+  int strLen = str.length();
+  int lcdLen = strLen - LCD_LEN / 2;
+  int indexFrom = 0;
+  int indexTo = 0;
+
+  while (indexFrom < lcdLen) {
+    indexTo = min(indexFrom + LCD_LEN, strLen);
+    subStr = str.substring(indexFrom, indexTo);
+    lcdPrintLine(subStr, lcdLine);
+
+    indexFrom += CHAR_COUNT_TO_SLIDE_PER_LCD_BLINK;
+    delay(LCD_BLINK_INTERVAL);
+  }
+}
+
+void lcdPrintLine(String str, int lcdLine) {
+  int padding = LCD_LEN - str.length();
+  if (padding > 0) {
+    char padStr[padding + 1];
+    fillCharactersToArray(padStr, padding, ' ');
+    str.concat(padStr);
+  }
+
+  lcd.setCursor(0, lcdLine);
+  lcd.print(str);
+}
+
+void fillCharactersToArray(char* arr, int n, char character) {
+  for (int i = 0; i < n; i++) {
+    arr[i] = character;
+  }
+  arr[n] = 0;
 }
