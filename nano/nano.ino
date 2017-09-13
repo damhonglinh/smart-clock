@@ -5,11 +5,14 @@
 
 #define LCD_LEN 16
 #define CHAR_COUNT_TO_SLIDE_PER_LCD_BLINK 4
-#define LCD_BLINK_INTERVAL 550
+#define LCD_BLINK_INTERVAL 600
 
 SoftwareSerial ESPserial(2, 3); // RX | TX
 LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7); // 0x27 is the I2C bus address for an unmodified backpack
-// String currentText;
+String wifiInput;
+String nextWifiInput;
+unsigned long prevMillisLcd = 0;
+int lcdIndexFrom = 0;
 
 void setup() {
   Serial.begin(9600);     // communication with the host computer
@@ -23,34 +26,41 @@ void setup() {
 }
 
 void loop() {
-  String wifiInput;
+  unsigned long currentMillis = millis();
+
   if (ESPserial.available()) {
-    wifiInput = ESPserial.readStringUntil('\n');
-    Serial.println(wifiInput);
+    nextWifiInput = ESPserial.readStringUntil('\n');
+    Serial.println(nextWifiInput);
   }
 
+  processLcdThread(currentMillis);
 
-  lcdPrintLongLine(wifiInput, 0);
-  delay(1000);
+  // delay(1000);
 }
 
 
 // ========== LCD ===========
 
-void lcdPrintLongLine(String str, int lcdLine) {
-  String subStr;
-  int strLen = str.length();
+void processLcdThread(unsigned long currentMillis) {
+  if (currentMillis - prevMillisLcd > LCD_BLINK_INTERVAL) {
+    lcdPrintLongLine();
+    prevMillisLcd = currentMillis;
+  }
+}
+
+void lcdPrintLongLine() {
+  int strLen = wifiInput.length();
   int lcdLen = strLen - LCD_LEN / 2;
-  int indexFrom = 0;
-  int indexTo = 0;
+  int indexTo = min(lcdIndexFrom + LCD_LEN, strLen);
+  String subStr = wifiInput.substring(lcdIndexFrom, indexTo);
 
-  while (indexFrom < lcdLen) {
-    indexTo = min(indexFrom + LCD_LEN, strLen);
-    subStr = str.substring(indexFrom, indexTo);
-    lcdPrintLine(subStr, lcdLine);
+  lcdPrintLine(subStr, 0);
 
-    indexFrom += CHAR_COUNT_TO_SLIDE_PER_LCD_BLINK;
-    delay(LCD_BLINK_INTERVAL);
+  if (lcdIndexFrom < lcdLen) {
+    lcdIndexFrom += CHAR_COUNT_TO_SLIDE_PER_LCD_BLINK;
+  } else {
+    lcdIndexFrom = 0;
+    wifiInput = nextWifiInput;
   }
 }
 

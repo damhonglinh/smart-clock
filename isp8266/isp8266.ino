@@ -123,6 +123,3 @@ void connectWifi() {
 // TODO
 // + Integrate Wunderlist
 // + https://theysaidso.com/api/
-
-// Then:
-// + Show in the LCD + Arduino
