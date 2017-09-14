@@ -44,12 +44,6 @@ void loop() {
   }
 
   processLcdThread(currentMillis);
-
-  Serial.print("Temperature is: ");
-  Serial.println(getTemperature());
-  delay(1000);
-
-  // delay(1000);
 }
 
 
@@ -58,6 +52,7 @@ void loop() {
 void processLcdThread(unsigned long currentMillis) {
   if (currentMillis - prevMillisLcd > LCD_BLINK_INTERVAL) {
     lcdPrintLongLine();
+    lcdPrintTemperature();
     prevMillisLcd = currentMillis;
   }
 }
@@ -88,6 +83,15 @@ void lcdPrintLine(String str, int lcdLine) {
 
   lcd.setCursor(0, lcdLine);
   lcd.print(str);
+}
+
+void lcdPrintTemperature() {
+  char degreeChar = (char)223; // ° degreeSymbol
+  float temp = getTemperature();
+  String tempStr = String(temp) + String(degreeChar) + "C";
+
+  lcd.setCursor(0, 1);
+  lcd.print(tempStr);
 }
 
 void fillCharactersToArray(char* arr, int n, char character) {
