@@ -86,10 +86,9 @@ void lcdPrintLine(String str, int lcdLine) {
 }
 
 void lcdPrintTemperature() {
-  char degreeChar = (char)223; // ° degreeSymbol
   float temp = getTemperature();
-  String tempStr = String(temp) + String(degreeChar) + "C";
-
+  char tempStr[10];
+  formatTempString(temp, tempStr);
   lcd.setCursor(0, 1);
   lcd.print(tempStr);
 }
@@ -106,4 +105,12 @@ void fillCharactersToArray(char* arr, int n, char character) {
 float getTemperature() {
   sensors.requestTemperatures();
   return sensors.getTempCByIndex(0);
+}
+
+void formatTempString(float temp, char* tempStr) {
+  char degreeChar = (char)223; // ° degreeSymbol
+  char tempOneDecPlace[6];
+
+  dtostrf(temp, 4, 1, tempOneDecPlace);
+  sprintf(tempStr, "%s%cC", tempOneDecPlace, degreeChar);
 }
