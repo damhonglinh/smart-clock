@@ -12,6 +12,8 @@
 #define LCD_BLINK_INTERVAL 600
 #define ONE_WIRE_BUS 7
 
+char MONTH_NAMES[12][4] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+
 SoftwareSerial ESPserial(2, 3); // RX | TX
 LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7); // 0x27 is the I2C bus address for an unmodified backpack
 OneWire oneWire(ONE_WIRE_BUS);
@@ -58,7 +60,7 @@ void processLcdThread(unsigned long currentMillis) {
   if (currentMillis - prevMillisLcd > LCD_BLINK_INTERVAL) {
     lcdPrintLongLine();
     lcdPrintTemperature();
-    lcdPrintTime();
+    lcdPrintDateTime();
     prevMillisLcd = currentMillis;
   }
 }
@@ -99,16 +101,31 @@ void lcdPrintTemperature() {
   lcd.print(tempStr);
 }
 
-void lcdPrintTime() {
+void lcdPrintDateTime() {
   DateTime now = rtc.now();
+  lcd.setCursor(9, 1);
+
+  if (now.second() % 5) {
+    lcdPrintTime(now);
+  } else {
+    lcdPrintDate(now);
+  }
+}
+
+void lcdPrintDate(DateTime& now) {
+  char* monthStr = MONTH_NAMES[now.month()];
+  char dateStr[11];
+  sprintf(dateStr, "%02d %s   ", now.day(), monthStr);
+
+  lcd.print(dateStr);
+}
+
+void lcdPrintTime(DateTime& now) {
   byte hour = now.hour() % 12;
-  bool showColon = now.second() % 2 == 0;
-  char colon = showColon ? ':' : ' ';
-
+  char* amStr = hour == now.hour() ? "am" : "pm";
   char timeStr[11];
-  sprintf(timeStr, "%02d %02d%c%02d", now.day(), hour, colon, now.minute());
+  sprintf(timeStr, "%02d:%02d%s", hour, now.minute(), amStr);
 
-  lcd.setCursor(8, 1);
   lcd.print(timeStr);
 }
 
