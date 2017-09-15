@@ -4,6 +4,8 @@
 #include <LiquidCrystal_I2C.h>
 #include <OneWire.h>
 #include <DallasTemperature.h>
+#include "RTClib.h"
+
 
 #define LCD_LEN 16
 #define CHAR_COUNT_TO_SLIDE_PER_LCD_BLINK 4
@@ -12,12 +14,14 @@
 
 SoftwareSerial ESPserial(2, 3); // RX | TX
 LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7); // 0x27 is the I2C bus address for an unmodified backpack
+OneWire oneWire(ONE_WIRE_BUS);
+DallasTemperature sensors(&oneWire);
+RTC_DS3231 rtc;
+
 String wifiInput;
 String nextWifiInput;
 unsigned long prevMillisLcd = 0;
 int lcdIndexFrom = 0;
-OneWire oneWire(ONE_WIRE_BUS);
-DallasTemperature sensors(&oneWire); // Pass our oneWire reference to Dallas Temperature.
 
 
 // ========== setup ==========
@@ -31,6 +35,7 @@ void setup() {
   lcd.setBacklight(HIGH);
 
   sensors.begin();
+  rtc.begin();
 
   Serial.println("Ready\n");
 }
@@ -53,6 +58,7 @@ void processLcdThread(unsigned long currentMillis) {
   if (currentMillis - prevMillisLcd > LCD_BLINK_INTERVAL) {
     lcdPrintLongLine();
     lcdPrintTemperature();
+    lcdPrintTime();
     prevMillisLcd = currentMillis;
   }
 }
@@ -91,6 +97,19 @@ void lcdPrintTemperature() {
   formatTempString(temp, tempStr);
   lcd.setCursor(0, 1);
   lcd.print(tempStr);
+}
+
+void lcdPrintTime() {
+  DateTime now = rtc.now();
+  byte hour = now.hour() % 12;
+  bool showColon = now.second() % 2 == 0;
+  char colon = showColon ? ':' : ' ';
+
+  char timeStr[11];
+  sprintf(timeStr, "%02d %02d%c%02d", now.day(), hour, colon, now.minute());
+
+  lcd.setCursor(8, 1);
+  lcd.print(timeStr);
 }
 
 void fillCharactersToArray(char* arr, int n, char character) {
