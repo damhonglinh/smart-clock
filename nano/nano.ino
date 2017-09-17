@@ -10,6 +10,7 @@
 #define LCD_LEN 16
 #define CHAR_COUNT_TO_SLIDE_PER_LCD_BLINK 4
 #define LCD_BLINK_INTERVAL 600
+#define TEMPERATURE_INTERVAL 1000
 #define ONE_WIRE_BUS 7
 
 char MONTH_NAMES[12][4] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
@@ -23,6 +24,7 @@ RTC_DS3231 rtc;
 String wifiInput;
 String nextWifiInput;
 unsigned long prevMillisLcd = 0;
+unsigned long prevMillisTemp = 0;
 int lcdIndexFrom = 0;
 
 
@@ -45,12 +47,15 @@ void setup() {
 void loop() {
   unsigned long currentMillis = millis();
 
+  preProcessTemperatureThread(currentMillis);
+
   if (ESPserial.available()) {
     nextWifiInput = ESPserial.readStringUntil('\n');
     Serial.println(nextWifiInput);
   }
 
   processLcdThread(currentMillis);
+  processTemperatureThread(currentMillis);
 }
 
 
@@ -59,7 +64,6 @@ void loop() {
 void processLcdThread(unsigned long currentMillis) {
   if (currentMillis - prevMillisLcd > LCD_BLINK_INTERVAL) {
     lcdPrintLongLine();
-    lcdPrintTemperature();
     lcdPrintDateTime();
     prevMillisLcd = currentMillis;
   }
@@ -91,14 +95,6 @@ void lcdPrintLine(String str, int lcdLine) {
 
   lcd.setCursor(0, lcdLine);
   lcd.print(str);
-}
-
-void lcdPrintTemperature() {
-  float temp = getTemperature();
-  char tempStr[10];
-  formatTempString(temp, tempStr);
-  lcd.setCursor(0, 1);
-  lcd.print(tempStr);
 }
 
 void lcdPrintDateTime() {
@@ -138,9 +134,27 @@ void fillCharactersToArray(char* arr, int n, char character) {
 
 // ========== Temperature ==========
 
-float getTemperature() {
-  sensors.requestTemperatures();
-  return sensors.getTempCByIndex(0);
+void preProcessTemperatureThread(unsigned long currentMillis) {
+  if (currentMillis - prevMillisTemp > TEMPERATURE_INTERVAL) {
+    sensors.setWaitForConversion(false);  // makes it async
+    sensors.requestTemperatures();
+    sensors.setWaitForConversion(true);
+  }
+}
+
+void processTemperatureThread(unsigned long currentMillis) {
+  if (currentMillis - prevMillisTemp > TEMPERATURE_INTERVAL) {
+    lcdPrintTemperature();
+    prevMillisTemp = currentMillis;
+  }
+}
+
+void lcdPrintTemperature() {
+  float temp = sensors.getTempCByIndex(0);
+  char tempStr[10];
+  formatTempString(temp, tempStr);
+  lcd.setCursor(0, 1);
+  lcd.print(tempStr);
 }
 
 void formatTempString(float temp, char* tempStr) {
