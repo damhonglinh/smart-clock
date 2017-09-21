@@ -9,9 +9,9 @@
 
 #define LCD_LEN 16
 #define CHAR_COUNT_TO_SLIDE_PER_LCD_BLINK 4
-#define LCD_BLINK_INTERVAL 600
+#define LCD_BLINK_INTERVAL 750
 #define TEMPERATURE_INTERVAL 1000
-#define ONE_WIRE_BUS 7
+#define ONE_WIRE_BUS 4
 
 char MONTH_NAMES[12][4] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 
