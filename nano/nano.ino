@@ -25,7 +25,7 @@ SSD1306AsciiWire oled;
 
 String wifiInput;
 String nextWifiInput;
-unsigned long prevMillisLcd = 0;
+unsigned long prevMillisQuote = 0;
 unsigned long prevMillisTemp = 0;
 int lcdIndexFrom = 0;
 
@@ -49,25 +49,25 @@ void setup() {
 void loop() {
   unsigned long currentMillis = millis();
 
-  preProcessTemperatureThread(currentMillis);
+  preProcessPrintingTempThread(currentMillis);
 
   if (ESPserial.available()) {
     nextWifiInput = ESPserial.readStringUntil('\n');
     Serial.println(nextWifiInput);
   }
 
-  processLcdThread(currentMillis);
-  processTemperatureThread(currentMillis);
+  processPrintingQuotesThread(currentMillis);
+  processPrintingTempThread(currentMillis);
 }
 
 
 // ========== LCD ===========
 
-void processLcdThread(unsigned long currentMillis) {
-  if (currentMillis - prevMillisLcd > DISPLAY_QUOTE_INTERVAL) {
+void processPrintingQuotesThread(unsigned long currentMillis) {
+  if (currentMillis - prevMillisQuote > DISPLAY_QUOTE_INTERVAL) {
     lcdPrintLongLine(0);
     lcdPrintLongLine(1);
-    prevMillisLcd = currentMillis;
+    prevMillisQuote = currentMillis;
   }
 }
 
@@ -91,6 +91,27 @@ void lcdPrintLine(String str, int lcdLine) {
   oled.print(str);
   oled.clearToEOL();
 }
+
+// ========== Printing extra info ==========
+
+void preProcessPrintingTempThread(unsigned long currentMillis) {
+  if (currentMillis - prevMillisTemp > TEMPERATURE_INTERVAL) {
+    sensors.setWaitForConversion(false);  // makes it async
+    sensors.requestTemperatures();
+    sensors.setWaitForConversion(true);
+  }
+}
+
+void processPrintingTempThread(unsigned long currentMillis) {
+  if (currentMillis - prevMillisTemp > TEMPERATURE_INTERVAL) {
+    lcdPrintTemperature();
+    lcdPrintDateTime();
+    oled.clearToEOL();
+    prevMillisTemp = currentMillis;
+  }
+}
+
+// ========== DateTime ==========
 
 void lcdPrintDateTime() {
   DateTime now = rtc.now();
@@ -121,23 +142,6 @@ void lcdPrintTime(DateTime& now) {
 }
 
 // ========== Temperature ==========
-
-void preProcessTemperatureThread(unsigned long currentMillis) {
-  if (currentMillis - prevMillisTemp > TEMPERATURE_INTERVAL) {
-    sensors.setWaitForConversion(false);  // makes it async
-    sensors.requestTemperatures();
-    sensors.setWaitForConversion(true);
-  }
-}
-
-void processTemperatureThread(unsigned long currentMillis) {
-  if (currentMillis - prevMillisTemp > TEMPERATURE_INTERVAL) {
-    lcdPrintTemperature();
-    lcdPrintDateTime();
-    oled.clearToEOL();
-    prevMillisTemp = currentMillis;
-  }
-}
 
 void lcdPrintTemperature() {
   float temp = sensors.getTempCByIndex(0);
