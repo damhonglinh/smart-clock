@@ -5,7 +5,6 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 #include "RTClib.h"
-#include <ResponsiveAnalogRead.h>
 
 
 #define LCD_LEN 16
@@ -22,7 +21,6 @@ SoftwareSerial ESPserial(2, 3); // RX | TX
 LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7); // 0x27 is the I2C bus address for an unmodified backpack
 OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature sensors(&oneWire);
-ResponsiveAnalogRead distances(0, true, 0.05);
 RTC_DS3231 rtc;
 
 String wifiInput;
@@ -37,9 +35,6 @@ int lcdIndexFrom = 0;
 void setup() {
   Serial.begin(9600);     // communication with the host computer
   ESPserial.begin(9600);  // communication with the ESP8266
-
-  pinMode(TRIG_PIN, OUTPUT);
-  pinMode(ECHO_PIN, INPUT);
 
   lcd.begin(16, 2); // for 16 x 2 LCD module
   lcd.setBacklightPin(3, POSITIVE);
@@ -63,9 +58,6 @@ void loop() {
 
   processLcdThread(currentMillis);
   processTemperatureThread(currentMillis);
-
-  unsigned long average_distance = smooth_measure_distance();
-  printDistance(average_distance);
 }
 
 
@@ -173,33 +165,4 @@ void formatTempString(float temp, char* tempStr) {
 
   dtostrf(temp, 4, 1, tempOneDecPlace);
   sprintf(tempStr, "%s%cC", tempOneDecPlace, degreeChar);
-}
-
-// ========== Distance ==========
-
-unsigned long smooth_measure_distance() {
-  distances.update(measure_distance());
-  return distances.getValue();
-}
-
-unsigned long measure_distance() {
-  unsigned long duration, distance;
-
-  digitalWrite(TRIG_PIN, LOW);
-  delayMicroseconds(2);
-  digitalWrite(TRIG_PIN, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(TRIG_PIN, LOW);
-  duration = pulseIn(ECHO_PIN, HIGH);
-  distance = (duration / 2) / 29.1;
-
-  return distance;
-}
-
-void printDistance(unsigned long average_distance) {
-  // display.showNumberDec(average_distance);
-
-  if (distances.hasChanged()) {
-    Serial.print("Distance: "); Serial.println(average_distance);
-  }
 }
