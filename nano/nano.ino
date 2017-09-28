@@ -12,8 +12,6 @@
 #define DISPLAY_QUOTE_INTERVAL 3000
 #define TEMPERATURE_INTERVAL 1000
 #define ONE_WIRE_BUS 4
-#define TRIG_PIN 7
-#define ECHO_PIN 8
 
 char MONTH_NAMES[12][4] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 
@@ -27,7 +25,7 @@ String wifiInput;
 String nextWifiInput;
 unsigned long prevMillisQuote = 0;
 unsigned long prevMillisTemp = 0;
-int lcdIndexFrom = 0;
+int oledIndexFrom = 0;
 
 
 // ========== setup ==========
@@ -61,38 +59,38 @@ void loop() {
 }
 
 
-// ========== LCD ===========
+// ========== Print quotes ===========
 
 void processPrintingQuotesThread(unsigned long currentMillis) {
   if (currentMillis - prevMillisQuote > DISPLAY_QUOTE_INTERVAL) {
-    lcdPrintLongLine(0);
-    lcdPrintLongLine(1);
+    oledPrintLongLine(0);
+    oledPrintLongLine(1);
     prevMillisQuote = currentMillis;
   }
 }
 
-void lcdPrintLongLine(int lcdLine) {
+void oledPrintLongLine(int oledLine) {
   int strLen = wifiInput.length();
-  int indexTo = min(lcdIndexFrom + OLED_LINE_LEN, strLen);
-  String subStr = wifiInput.substring(lcdIndexFrom, indexTo);
+  int indexTo = min(oledIndexFrom + OLED_LINE_LEN, strLen);
+  String subStr = wifiInput.substring(oledIndexFrom, indexTo);
 
-  lcdPrintLine(subStr, lcdLine * 2);
+  oledPrintLine(subStr, oledLine * 2);
 
-  if (lcdIndexFrom < strLen) {
-    lcdIndexFrom += OLED_LINE_LEN;
+  if (oledIndexFrom < strLen) {
+    oledIndexFrom += OLED_LINE_LEN;
   } else {
-    lcdIndexFrom = 0;
+    oledIndexFrom = 0;
     wifiInput = nextWifiInput;
   }
 }
 
-void lcdPrintLine(String str, int lcdLine) {
-  oled.setCursor(0, lcdLine);
+void oledPrintLine(String str, int oledLine) {
+  oled.setCursor(0, oledLine);
   oled.print(str);
   oled.clearToEOL();
 }
 
-// ========== Printing extra info ==========
+// ========== Print extra info ==========
 
 void preProcessPrintingTempThread(unsigned long currentMillis) {
   if (currentMillis - prevMillisTemp > TEMPERATURE_INTERVAL) {
@@ -104,8 +102,8 @@ void preProcessPrintingTempThread(unsigned long currentMillis) {
 
 void processPrintingTempThread(unsigned long currentMillis) {
   if (currentMillis - prevMillisTemp > TEMPERATURE_INTERVAL) {
-    lcdPrintTemperature();
-    lcdPrintDateTime();
+    oledPrintTemperature();
+    oledPrintDateTime();
     oled.clearToEOL();
     prevMillisTemp = currentMillis;
   }
@@ -113,18 +111,18 @@ void processPrintingTempThread(unsigned long currentMillis) {
 
 // ========== DateTime ==========
 
-void lcdPrintDateTime() {
+void oledPrintDateTime() {
   DateTime now = rtc.now();
   oled.setCursor(60, 4); // in the middle of row 2
 
   if (now.second() % 5) {
-    lcdPrintTime(now);
+    oledPrintTime(now);
   } else {
-    lcdPrintDate(now);
+    oledPrintDate(now);
   }
 }
 
-void lcdPrintDate(DateTime& now) {
+void oledPrintDate(DateTime& now) {
   char* monthStr = MONTH_NAMES[now.month()];
   char dateStr[11];
   sprintf(dateStr, "%02d %s   ", now.day(), monthStr);
@@ -132,7 +130,7 @@ void lcdPrintDate(DateTime& now) {
   oled.print(dateStr);
 }
 
-void lcdPrintTime(DateTime& now) {
+void oledPrintTime(DateTime& now) {
   byte hour = now.hour() % 12;
   char* amStr = hour == now.hour() ? "am" : "pm";
   char timeStr[11];
@@ -143,7 +141,7 @@ void lcdPrintTime(DateTime& now) {
 
 // ========== Temperature ==========
 
-void lcdPrintTemperature() {
+void oledPrintTemperature() {
   float temp = sensors.getTempCByIndex(0);
   char tempStr[10];
   formatTempString(temp, tempStr);
