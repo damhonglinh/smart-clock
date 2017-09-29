@@ -68,6 +68,8 @@ void loop() {
 
 void processPrintingQuotesThread(unsigned long currentMillis) {
   if (currentMillis - prevMillisQuote > DISPLAY_QUOTE_INTERVAL) {
+    oled.setFont(font5x7);
+    oled.set1X();
     oledPrintLongLine(0);
     oledPrintLongLine(1);
     prevMillisQuote = currentMillis;
@@ -79,7 +81,7 @@ void oledPrintLongLine(int oledLine) {
   int indexTo = min(oledIndexFrom + OLED_LINE_LEN, strLen);
   String subStr = wifiInput.substring(oledIndexFrom, indexTo);
 
-  oledPrintLine(subStr, oledLine * 2);
+  oledPrintLine(subStr, oledLine);
 
   if (oledIndexFrom < strLen) {
     oledIndexFrom += OLED_LINE_LEN;
@@ -107,7 +109,12 @@ void preProcessPrintingTempThread(unsigned long currentMillis) {
 
 void processPrintingTempThread(unsigned long currentMillis) {
   if (currentMillis - prevMillisTemp > TEMPERATURE_INTERVAL) {
+    oled.setFont(font5x7);
+    oled.set1X();
     oledPrintTemperature();
+
+    oled.setFont(Verdana12);
+    oled.set2X();
     oledPrintDateTime();
     oled.clearToEOL();
     prevMillisTemp = currentMillis;
@@ -118,7 +125,7 @@ void processPrintingTempThread(unsigned long currentMillis) {
 
 void oledPrintDateTime() {
   DateTime now = rtc.now();
-  oled.setCursor(60, 4); // in the middle of row 2
+  oled.setCursor(12, 4);
 
   if ((now.second() % 5) < 3) {
     oledPrintTime(now);
@@ -139,7 +146,7 @@ void oledPrintTime(DateTime& now) {
   byte hour = now.hour() % 12;
   char* amStr = hour == now.hour() ? "am" : "pm";
   char timeStr[11];
-  sprintf(timeStr, "%02d:%02d%s", hour, now.minute(), amStr);
+  sprintf(timeStr, "%02d : %02d%s", hour, now.minute(), amStr);
 
   oled.print(timeStr);
 }
@@ -150,7 +157,7 @@ void oledPrintTemperature() {
   float temp = sensors.getTempCByIndex(0);
   char tempStr[10];
   formatTempString(temp, tempStr);
-  oled.setCursor(0, 4);
+  oled.setCursor(12, 3);
   oled.print(tempStr);
 }
 
