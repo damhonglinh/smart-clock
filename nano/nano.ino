@@ -34,15 +34,20 @@ void setup() {
   Serial.begin(9600);     // communication with the host computer
   ESPserial.begin(9600);  // communication with the ESP8266
 
-  oled.begin(&Adafruit128x64, OLED_DISPLAY_ADDRESS);
-  oled.setFont(Verdana12);
-  oled.clear();
-
   sensors.begin();
   rtc.begin();
+  setupOledDisplay();
 
   Serial.println("Ready\n");
 }
+
+void setupOledDisplay() {
+  Wire.begin();
+  oled.begin(&Adafruit128x64, OLED_DISPLAY_ADDRESS);
+  oled.clear();
+}
+
+// ========== LOOP ==========
 
 void loop() {
   unsigned long currentMillis = millis();
@@ -115,7 +120,7 @@ void oledPrintDateTime() {
   DateTime now = rtc.now();
   oled.setCursor(60, 4); // in the middle of row 2
 
-  if (now.second() % 5) {
+  if ((now.second() % 5) < 3) {
     oledPrintTime(now);
   } else {
     oledPrintDate(now);
