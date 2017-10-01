@@ -135,7 +135,7 @@ void oledPrintDateTime() {
 }
 
 void oledPrintDate(DateTime& now) {
-  char* monthStr = MONTH_NAMES[now.month()];
+  char* monthStr = MONTH_NAMES[now.month() - 1];
   char dateStr[11];
   sprintf(dateStr, "%02d %s   ", now.day(), monthStr);
 
