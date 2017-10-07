@@ -12,6 +12,9 @@
 #define DISPLAY_QUOTE_INTERVAL 3000
 #define TEMPERATURE_INTERVAL 1000
 #define ONE_WIRE_BUS 4
+#define BUZZER_PIN 10
+#define MONTION_SENSOR_PIN 13
+#define LED_PIN 12
 
 char MONTH_NAMES[12][4] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 
@@ -37,6 +40,9 @@ void setup() {
   sensors.begin();
   rtc.begin();
   setupOledDisplay();
+  pinMode(BUZZER_PIN, OUTPUT);
+  pinMode(LED_PIN, OUTPUT);
+  pinMode(MONTION_SENSOR_PIN, INPUT);
 
   Serial.println("Ready\n");
 }
@@ -61,6 +67,7 @@ void loop() {
 
   processPrintingQuotesThread(currentMillis);
   processPrintingTempThread(currentMillis);
+  processMotionSensor(currentMillis);
 }
 
 
@@ -167,4 +174,18 @@ void formatTempString(float temp, char* tempStr) {
 
   dtostrf(temp, 4, 1, tempOneDecPlace);
   sprintf(tempStr, "%s%cC", tempOneDecPlace, '*');
+}
+
+// ========== Motion Sensor ==========
+
+void processMotionSensor(unsigned long currentMillis) {
+  byte val = digitalRead(MONTION_SENSOR_PIN);
+
+  if (val == HIGH) {
+    digitalWrite(LED_PIN, HIGH);
+    tone(BUZZER_PIN, 440, 50);
+  } else {
+    digitalWrite(LED_PIN, LOW);
+    noTone(BUZZER_PIN);
+  }
 }
