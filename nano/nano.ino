@@ -15,6 +15,8 @@
 #define BUZZER_PIN 10
 #define MONTION_SENSOR_PIN 13
 #define LED_PIN 12
+#define SOUND_INPUT_PIN A7
+#define SOUND_INPUT_WINDOW 50
 
 char MONTH_NAMES[12][4] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 
@@ -68,6 +70,7 @@ void loop() {
   processPrintingQuotesThread(currentMillis);
   processPrintingTempThread(currentMillis);
   processMotionSensor(currentMillis);
+  processSoundSensor(currentMillis);
 }
 
 
@@ -188,4 +191,28 @@ void processMotionSensor(unsigned long currentMillis) {
     digitalWrite(LED_PIN, LOW);
     noTone(BUZZER_PIN);
   }
+}
+
+// ========== Sound Sensor ==========
+
+void processSoundSensor(unsigned long currentMillis) {
+  unsigned int inputMax = 0;
+  unsigned int inputMin = 1024;
+  unsigned int inputSample;
+
+  for (unsigned int i = 0; i < SOUND_INPUT_WINDOW; i++) {
+    inputSample = analogRead(SOUND_INPUT_PIN);
+    // get the minimum and maximum value
+    inputMin = min(inputMin, inputSample);
+    inputMax = max(inputMax, inputSample);
+  }
+
+  // send the values on serial
+  Serial.print("Min: ");
+  Serial.print(inputMin);
+  Serial.print("  Max: ");
+  Serial.print(inputMax);
+  Serial.print("  Diff: ");
+  Serial.print(inputMax - inputMin);
+  Serial.println();
 }
