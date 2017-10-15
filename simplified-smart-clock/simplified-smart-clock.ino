@@ -5,6 +5,7 @@
 #include "RTClib.h"
 #include "SSD1306Ascii.h"
 #include "SSD1306AsciiWire.h"
+#include <TM1637Display.h>
 
 
 #define OLED_DISPLAY_ADDRESS 0x3C
@@ -13,8 +14,8 @@
 #define TEMPERATURE_INTERVAL 1000
 
 #define ONE_WIRE_BUS 7
-#define CLK 8
-#define DIO 9
+#define CLK 11
+#define DIO 10
 
 char MONTH_NAMES[12][4] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 
@@ -22,22 +23,20 @@ OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature sensors(&oneWire);
 RTC_DS3231 rtc;
 SSD1306AsciiWire oled;
+TM1637Display timeDisplay(CLK, DIO);
 
-String wifiInput;
-String nextWifiInput;
-unsigned long prevMillisQuote = 0;
 unsigned long prevMillisTemp = 0;
-int oledIndexFrom = 0;
 
 
 // ========== setup ==========
 
 void setup() {
-  Serial.begin(9600);     // communication with the host computer
+  Serial.begin(9600);
 
   sensors.begin();
   rtc.begin();
   setupOledDisplay();
+  setupTimeDisplay();
 
   Serial.println("Ready\n");
 }
@@ -46,51 +45,34 @@ void setupOledDisplay() {
   Wire.begin();
   oled.begin(&Adafruit128x64, OLED_DISPLAY_ADDRESS);
   oled.clear();
+  oled.setFont(Verdana12);
+}
+
+void setupTimeDisplay() {
+  timeDisplay.setBrightness(2);
+  uint8_t data[] = { 0xff, 0xff, 0xff, 0xff };
+  timeDisplay.setSegments(data);
 }
 
 // ========== LOOP ==========
 
 void loop() {
   unsigned long currentMillis = millis();
-
   preProcessPrintingTempThread(currentMillis);
 
-  processPrintingQuotesThread(currentMillis);
+  processPrintTime(currentMillis);
   processPrintingTempThread(currentMillis);
 }
 
+// ========== Print Time Display ==========
 
-// ========== Print quotes ===========
+void processPrintTime(unsigned long currentMillis) {
+  DateTime now = rtc.now();
+  byte hour = now.hour() % 12;
+  byte minute = now.minute();
 
-void processPrintingQuotesThread(unsigned long currentMillis) {
-  if (currentMillis - prevMillisQuote > DISPLAY_QUOTE_INTERVAL) {
-    oled.setFont(font5x7);
-    oled.set1X();
-    oledPrintLongLine(0);
-    oledPrintLongLine(1);
-    prevMillisQuote = currentMillis;
-  }
-}
-
-void oledPrintLongLine(int oledLine) {
-  int strLen = wifiInput.length();
-  int indexTo = min(oledIndexFrom + OLED_LINE_LEN, strLen);
-  String subStr = wifiInput.substring(oledIndexFrom, indexTo);
-
-  oledPrintLine(subStr, oledLine);
-
-  if (oledIndexFrom < strLen) {
-    oledIndexFrom += OLED_LINE_LEN;
-  } else {
-    oledIndexFrom = 0;
-    wifiInput = nextWifiInput;
-  }
-}
-
-void oledPrintLine(String str, int oledLine) {
-  oled.setCursor(0, oledLine);
-  oled.print(str);
-  oled.clearToEOL();
+  timeDisplay.showNumberDec(hour, true, 2, 0);
+  timeDisplay.showNumberDec(minute, true, 2, 2);
 }
 
 // ========== Print extra info ==========
@@ -105,35 +87,33 @@ void preProcessPrintingTempThread(unsigned long currentMillis) {
 
 void processPrintingTempThread(unsigned long currentMillis) {
   if (currentMillis - prevMillisTemp > TEMPERATURE_INTERVAL) {
-    oled.setFont(font5x7);
     oled.set1X();
+    oledPrintDateTime();
+
+    oled.set2X();
+    oled.setCursor(28, 3);
     oledPrintTemperature();
 
-    oled.setFont(Verdana12);
-    oled.set2X();
-    oledPrintDateTime();
     oled.clearToEOL();
     prevMillisTemp = currentMillis;
   }
 }
 
-// ========== DateTime ==========
+// ========== Print DateTime ==========
 
 void oledPrintDateTime() {
   DateTime now = rtc.now();
-  oled.setCursor(12, 4);
+  oled.setCursor(12, 0);
+  oledPrintTime(now);
 
-  if ((now.second() % 5) < 3) {
-    oledPrintTime(now);
-  } else {
-    oledPrintDate(now);
-  }
+  oled.setCursor(78, 0);
+  oledPrintDate(now);
 }
 
 void oledPrintDate(DateTime& now) {
   char* monthStr = MONTH_NAMES[now.month() - 1];
   char dateStr[11];
-  sprintf(dateStr, "%02d %s   ", now.day(), monthStr);
+  sprintf(dateStr, "%02d %s", now.day(), monthStr);
 
   oled.print(dateStr);
 }
@@ -153,12 +133,11 @@ void oledPrintTemperature() {
   float temp = sensors.getTempCByIndex(0);
   char tempStr[10];
   formatTempString(temp, tempStr);
-  oled.setCursor(12, 3);
   oled.print(tempStr);
 }
 
 void formatTempString(float temp, char* tempStr) {
-  char degreeChar = (char)223; // ° degreeSymbol
+  // char degreeChar = (char)223; // ° degreeSymbol
   char tempOneDecPlace[6];
 
   dtostrf(temp, 4, 1, tempOneDecPlace);
