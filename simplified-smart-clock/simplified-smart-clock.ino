@@ -104,7 +104,7 @@ void processPrintTimeLed() {
   DateTime now = rtc.now();
   byte currentSecond = now.second();
 
-  if (currentSecond > prevSecond) {
+  if (currentSecond != prevSecond) {
     oled.set1X();
     oledPrintDateTime(now);
     prevSecond = currentSecond;
