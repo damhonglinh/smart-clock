@@ -61,20 +61,22 @@ void loop() {
   unsigned long currentMillis = millis();
   preProcessPrintingTempThread(currentMillis);
 
-  processPrintTime(currentMillis);
+  processPrintTime();
   processPrintTimeLed();
   processPrintingTempThread(currentMillis);
 }
 
 // ========== Print Time Display ==========
 
-void processPrintTime(unsigned long currentMillis) {
+void processPrintTime() {
   DateTime now = rtc.now();
   byte hour = now.hour() % 12;
-  byte minute = now.minute();
+  byte second = now.second();
 
-  timeDisplay.showNumberDec(hour, true, 2, 0);
-  timeDisplay.showNumberDec(minute, true, 2, 2);
+  int result = hour * 100 + now.minute();
+  int dot = (0x80 >> (second % 2)); // odd seconds => show dot; even seconds => hide dot
+
+  timeDisplay.showNumberDecEx(result, dot, true, 4, 0);
 }
 
 // ========== Print extra info ==========
