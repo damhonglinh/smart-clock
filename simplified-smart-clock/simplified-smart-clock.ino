@@ -26,6 +26,7 @@ SSD1306AsciiWire oled;
 TM1637Display timeDisplay(CLK, DIO);
 
 unsigned long prevMillisTemp = 0;
+unsigned long prevSecond = 0;
 
 
 // ========== setup ==========
@@ -61,6 +62,7 @@ void loop() {
   preProcessPrintingTempThread(currentMillis);
 
   processPrintTime(currentMillis);
+  processPrintTimeLed();
   processPrintingTempThread(currentMillis);
 }
 
@@ -87,9 +89,6 @@ void preProcessPrintingTempThread(unsigned long currentMillis) {
 
 void processPrintingTempThread(unsigned long currentMillis) {
   if (currentMillis - prevMillisTemp > TEMPERATURE_INTERVAL) {
-    oled.set1X();
-    oledPrintDateTime();
-
     oled.set2X();
     oled.setCursor(28, 3);
     oledPrintTemperature();
@@ -101,12 +100,22 @@ void processPrintingTempThread(unsigned long currentMillis) {
 
 // ========== Print DateTime ==========
 
-void oledPrintDateTime() {
+void processPrintTimeLed() {
   DateTime now = rtc.now();
-  oled.setCursor(12, 0);
+  byte currentSecond = now.second();
+
+  if (currentSecond > prevSecond) {
+    oled.set1X();
+    oledPrintDateTime(now);
+    prevSecond = currentSecond;
+  }
+}
+
+void oledPrintDateTime(DateTime now) {
+  oled.setCursor(8, 0);
   oledPrintTime(now);
 
-  oled.setCursor(78, 0);
+  oled.setCursor(90, 0);
   oledPrintDate(now);
 }
 
@@ -122,7 +131,7 @@ void oledPrintTime(DateTime& now) {
   byte hour = now.hour() % 12;
   char* amStr = hour == now.hour() ? "am" : "pm";
   char timeStr[11];
-  sprintf(timeStr, "%02d : %02d%s", hour, now.minute(), amStr);
+  sprintf(timeStr, "%02d:%02d:%02d%s", hour, now.minute(), now.second(), amStr);
 
   oled.print(timeStr);
 }
@@ -143,4 +152,3 @@ void formatTempString(float temp, char* tempStr) {
   dtostrf(temp, 4, 1, tempOneDecPlace);
   sprintf(tempStr, "%s%cC", tempOneDecPlace, '*');
 }
-
