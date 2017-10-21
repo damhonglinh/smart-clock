@@ -13,23 +13,26 @@
 #define DISPLAY_QUOTE_INTERVAL 3000
 #define TEMPERATURE_INTERVAL 1000
 
+#define SDA_PIN 12
+#define SCL_PIN 14
 #define RED_PIN 15
 #define GREEN_PIN 12
 #define BLUE_PIN 13
-#define ONE_WIRE_BUS 7
-#define CLK 11
-#define DIO 10
+// #define ONE_WIRE_BUS 7
+// #define CLK 11
+// #define DIO 10
 
 char MONTH_NAMES[12][4] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 
-OneWire oneWire(ONE_WIRE_BUS);
-DallasTemperature sensors(&oneWire);
+// OneWire oneWire(ONE_WIRE_BUS);
+// DallasTemperature sensors(&oneWire);
 RTC_DS3231 rtc;
 SSD1306AsciiWire oled;
-TM1637Display timeDisplay(CLK, DIO);
+// TM1637Display timeDisplay(CLK, DIO);
 
 unsigned long prevMillisTemp = 0;
 
+bool onOff = true;
 
 // ========== setup ==========
 
@@ -38,28 +41,28 @@ void setup() {
   pinMode(RED_PIN, OUTPUT);
   pinMode(BLUE_PIN, OUTPUT);
   pinMode(GREEN_PIN, OUTPUT);
+  Wire.begin(SDA_PIN, SCL_PIN);
 
-  sensors.begin();
+  // sensors.begin();
   yield();
   rtc.begin();
-  setupOledDisplay();
-  setupTimeDisplay();
+  // setupOledDisplay();
+  // setupTimeDisplay();
 
   Serial.println("Ready\n");
 }
 
 void setupOledDisplay() {
-  Wire.begin();
   oled.begin(&Adafruit128x64, OLED_DISPLAY_ADDRESS);
   oled.clear();
   oled.setFont(Verdana12);
 }
 
-void setupTimeDisplay() {
-  timeDisplay.setBrightness(2);
-  uint8_t data[] = { 0xff, 0xff, 0xff, 0xff };
-  timeDisplay.setSegments(data);
-}
+// void setupTimeDisplay() {
+//   timeDisplay.setBrightness(2);
+//   uint8_t data[] = { 0xff, 0xff, 0xff, 0xff };
+//   timeDisplay.setSegments(data);
+// }
 
 // ========== LOOP ==========
 
@@ -71,6 +74,9 @@ void loop() {
 
   processPrintTime(currentMillis);
   processPrintingTempThread(currentMillis);
+
+  oled.print("Test");
+  yield();
 }
 
 // ========== Print Time Display ==========
@@ -80,8 +86,8 @@ void processPrintTime(unsigned long currentMillis) {
   byte hour = now.hour() % 12;
   byte minute = now.minute();
 
-  timeDisplay.showNumberDec(hour, true, 2, 0);
-  timeDisplay.showNumberDec(minute, true, 2, 2);
+  // timeDisplay.showNumberDec(hour, true, 2, 0);
+  // timeDisplay.showNumberDec(minute, true, 2, 2);
   Serial.print(hour);
   Serial.print(":");
   Serial.println(minute);
@@ -89,72 +95,72 @@ void processPrintTime(unsigned long currentMillis) {
 
 // ========== Print extra info ==========
 
-void preProcessPrintingTempThread(unsigned long currentMillis) {
-  if (currentMillis - prevMillisTemp > TEMPERATURE_INTERVAL) {
-    sensors.setWaitForConversion(false);  // makes it async
-    sensors.requestTemperatures();
-    sensors.setWaitForConversion(true);
-  }
-}
+// void preProcessPrintingTempThread(unsigned long currentMillis) {
+//   if (currentMillis - prevMillisTemp > TEMPERATURE_INTERVAL) {
+//     sensors.setWaitForConversion(false);  // makes it async
+//     sensors.requestTemperatures();
+//     sensors.setWaitForConversion(true);
+//   }
+// }
 
 void processPrintingTempThread(unsigned long currentMillis) {
-  if (currentMillis - prevMillisTemp > TEMPERATURE_INTERVAL) {
-    oled.set1X();
-    oledPrintDateTime();
+//   if (currentMillis - prevMillisTemp > TEMPERATURE_INTERVAL) {
+    // oled.set1X();
+    // oledPrintDateTime();
 
-    oled.set2X();
-    oled.setCursor(28, 3);
-    oledPrintTemperature();
+//     // oled.set2X();
+//     // oled.setCursor(28, 3);
+//     oledPrintTemperature();
 
-    oled.clearToEOL();
-    prevMillisTemp = currentMillis;
-  }
+    // oled.clearToEOL();
+//     prevMillisTemp = currentMillis;
+//   }
 }
 
 // ========== Print DateTime ==========
 
-void oledPrintDateTime() {
-  DateTime now = rtc.now();
-  oled.setCursor(12, 0);
-  oledPrintTime(now);
+// void oledPrintDateTime() {
+//   DateTime now = rtc.now();
+//   oled.setCursor(12, 0);
+//   oledPrintTime(now);
 
-  oled.setCursor(78, 0);
-  oledPrintDate(now);
-}
+//   oled.setCursor(78, 0);
+//   oledPrintDate(now);
+// }
 
-void oledPrintDate(DateTime& now) {
-  char* monthStr = MONTH_NAMES[now.month() - 1];
-  char dateStr[11];
-  sprintf(dateStr, "%02d %s", now.day(), monthStr);
+// void oledPrintDate(DateTime& now) {
+//   char* monthStr = MONTH_NAMES[now.month() - 1];
+//   char dateStr[11];
+//   sprintf(dateStr, "%02d %s", now.day(), monthStr);
 
-  oled.print(dateStr);
-}
+//   oled.print(dateStr);
+// }
 
-void oledPrintTime(DateTime& now) {
-  byte hour = now.hour() % 12;
-  char* amStr = hour == now.hour() ? "am" : "pm";
-  char timeStr[11];
-  sprintf(timeStr, "%02d : %02d%s", hour, now.minute(), amStr);
+// void oledPrintTime(DateTime& now) {
+//   byte hour = now.hour() % 12;
+//   const char* amStr = hour == now.hour() ? "am" : "pm";
+//   char timeStr[11];
+//   sprintf(timeStr, "%02d : %02d%s", hour, now.minute(), amStr);
 
-  oled.print(timeStr);
-}
+//   Serial.println(timeStr);
+// }
 
 // ========== Temperature ==========
 
-void oledPrintTemperature() {
-  float temp = sensors.getTempCByIndex(0);
-  char tempStr[10];
-  formatTempString(temp, tempStr);
-  oled.print(tempStr);
-}
+// void oledPrintTemperature() {
+//   float temp = sensors.getTempCByIndex(0);
+//   char tempStr[10];
+//   formatTempString(temp, tempStr);
+//   Serial.println(tempStr);
+// }
 
-void formatTempString(float temp, char* tempStr) {
-  // char degreeChar = (char)223; // ° degreeSymbol
-  char tempOneDecPlace[6];
+// void formatTempString(float temp, char* tempStr) {
+//   // char degreeChar = (char)223; // ° degreeSymbol
+//   char tempOneDecPlace[6];
 
-  dtostrf(temp, 4, 1, tempOneDecPlace);
-  sprintf(tempStr, "%s%cC", tempOneDecPlace, '*');
-}
+//   dtostrf(temp, 4, 1, tempOneDecPlace);
+//   sprintf(tempStr, "%s%cC", tempOneDecPlace, '*');
+// }
 
 
 
