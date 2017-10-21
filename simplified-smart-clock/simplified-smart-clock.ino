@@ -90,7 +90,7 @@ void preProcessPrintingTempThread(unsigned long currentMillis) {
 void processPrintingTempThread(unsigned long currentMillis) {
   if (currentMillis - prevMillisTemp > TEMPERATURE_INTERVAL) {
     oled.set2X();
-    oled.setCursor(28, 3);
+    oled.setCursor(32, 3);
     oledPrintTemperature();
 
     oled.clearToEOL();
@@ -112,10 +112,10 @@ void processPrintTimeLed() {
 }
 
 void oledPrintDateTime(DateTime now) {
-  oled.setCursor(8, 0);
+  oled.setCursor(10, 0);
   oledPrintTime(now);
 
-  oled.setCursor(90, 0);
+  oled.setCursor(84, 0);
   oledPrintDate(now);
 }
 
@@ -150,5 +150,5 @@ void formatTempString(float temp, char* tempStr) {
   char tempOneDecPlace[6];
 
   dtostrf(temp, 4, 1, tempOneDecPlace);
-  sprintf(tempStr, "%s%cC", tempOneDecPlace, '*');
+  sprintf(tempStr, "%s%cC", tempOneDecPlace, ' ');
 }
