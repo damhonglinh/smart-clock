@@ -70,8 +70,15 @@ void loop() {
 
 void processPrintTime() {
   DateTime now = rtc.now();
-  byte hour = now.hour() % 12;
+  byte hour24 = now.hour();
+  byte hour = hour24 % 12;
   byte second = now.second();
+
+  if (hour24 > 6 && hour24 < 18) {
+    timeDisplay.setBrightness(5);
+  } else {
+    timeDisplay.setBrightness(1);
+  }
 
   int result = hour * 100 + now.minute();
   int dot = (0x80 >> (second % 2)); // odd seconds => show dot; even seconds => hide dot
