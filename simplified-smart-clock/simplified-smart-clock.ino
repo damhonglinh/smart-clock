@@ -40,6 +40,7 @@ void setup() {
   setupTimeDisplay();
 
   Serial.println("Ready\n");
+  setupPermanentDate();
 }
 
 void setupOledDisplay() {
@@ -160,4 +161,10 @@ void formatTempString(float temp, char* tempStr) {
 
   dtostrf(temp, 4, 1, tempOneDecPlace);
   sprintf(tempStr, "%s%cC", tempOneDecPlace, ' ');
+}
+
+// ========== Setup permanent date ==========
+
+void setupPermanentDate() {
+  // rtc.adjust(DateTime(2018, 7, 13, 22, 30, 50));
 }
