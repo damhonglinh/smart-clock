@@ -1,4 +1,7 @@
 #include <ESP8266WiFi.h>
+#include <ESP8266WiFiMulti.h>
+#include <ESP8266HTTPClient.h>
+
 #define RED_PIN 15
 #define GREEN_PIN 12
 #define BLUE_PIN 13
@@ -8,7 +11,7 @@
 
 const char* ssid = "Microsoft";
 const char* password = "password";
-const char* host1 = "judgelinh.ngrok.io";
+const char* host = "https://judgelinh.ngrok.io/";
 bool onOff = true;
 
 void setup() {
@@ -23,66 +26,37 @@ void loop() {
   Serial.println("Looping...");
   ledGreen();
   yield();
-  readFromURL(host1, "/");
+  fetchWithHttp(host, "/");
   delay(10000);
 }
 
-void readFromURL(const char* host, String url) {
-  Serial.print("connecting to ");
-  Serial.println(host);
 
-  // Use WiFiClient class to create TCP connections
-  WiFiClientSecure client;
+void fetchWithHttp(const char* host, String url) {
+  Serial.println("[HTTP] begin...");
 
-  if (!connectTo(client, host)) {
-    return;
-  }
+  HTTPClient http;
+  http.begin(host, "32 D1 EC 69 40 D3 4E 76 F8 32 89 4E 0C 4F 1C 62 2B AC 49 D9");
 
-  Serial.println("Requesting URL: " + url);
+  Serial.println("[HTTP] GET...");
 
-  // This will send the request to the server
-  client.print(String("GET ") + url + " HTTP/1.1\r\n" +
-               "Host: " + host + "\r\n" +
-               "Connection: close\r\n\r\n");
+  int httpCode = http.GET();
 
-  if (!waitForConnection(client)) {
-    return;
-  }
+  // httpCode will be negative on error
+  if (httpCode > 0) {
+    // HTTP header has been send and Server response header has been handled
+    Serial.printf("[HTTP] GET... code: %d\n", httpCode);
 
-  // Read all the lines of the reply from server and print them to Serial
-  while (client.available()) {
-    String tempMsg = client.readStringUntil('\n');
-    Serial.println(tempMsg);
-  }
-
-  Serial.println("============== Closing connection");
-}
-
-
-bool connectTo(WiFiClientSecure& client, const char* host) {
-  if (!client.connect(host, HTTP_PORT)) {
-    Serial.println("Connection FAILED");
-    ledRed();
-    yield();
-    return false;
-  }
-  return true;
-}
-
-bool waitForConnection(WiFiClientSecure& client) {
-  unsigned long timeout = millis();
-  while (client.available() == 0) {
-    yield();
-
-    if (millis() - timeout > TIME_OUT) {
-      Serial.println(">>> Client Timeout !");
-      client.stop();
-      ledColor(255, 160, 176); // pink
-      return false;
+    if (httpCode == HTTP_CODE_OK) {
+      String payload = http.getString();
+      Serial.println(payload);
     }
+  } else {
+    Serial.printf("[HTTP] GET... failed, error: %s\n", http.errorToString(httpCode).c_str());
   }
-  return true;
+
+  http.end();
 }
+
 
 void ledColor(int red, int green, int blue) {
   if (onOff) {
@@ -110,16 +84,17 @@ int readLDR() {
 
 
 void connectWifi() {
-  WiFi.begin(ssid, password);
+  ESP8266WiFiMulti WiFiMulti;
+  WiFiMulti.addAP(ssid, password);
 
-  while (WiFi.status() != WL_CONNECTED) {
+  while (WiFiMulti.run() != WL_CONNECTED) {
     ledColor(225, 0 , 225); // purple
     delay(500);
   }
 
   Serial.println("");
   Serial.print("Connected to ");
-  Serial.println(ssid);
+  Serial.println(WiFi.SSID());
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
 }
