@@ -1,6 +1,7 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WiFiMulti.h>
 #include <ESP8266HTTPClient.h>
+#include <ArduinoJson.h>
 
 #define RED_PIN 15
 #define GREEN_PIN 12
@@ -11,7 +12,7 @@
 
 const char* ssid = "Microsoft";
 const char* password = "password";
-const char* host = "https://judgelinh.ngrok.io/";
+const char* host = "http://api.forismatic.com/api/1.0/?method=getQuote&format=json&lang=en";
 const char* fingerPrint = "32 D1 EC 69 40 D3 4E 76 F8 32 89 4E 0C 4F 1C 62 2B AC 49 D9";
 bool onOff = true;
 
@@ -29,7 +30,7 @@ void loop() {
   yield();
   httpGet(host);
   // httpPost(host);
-  delay(10000);
+  delay(5000);
 }
 
 // ==========================================================================
@@ -38,14 +39,18 @@ void httpGet(const char* url) {
   Serial.println("[HTTP] begin...");
 
   HTTPClient http;
-  http.begin(url, fingerPrint);
+  http.begin(url);
   int httpCode = http.GET();
 
   if (httpCode > 0) {
     Serial.printf("[HTTP] GET... code: %d\n", httpCode);
 
     String payload = http.getString();
+    const char* quoteText = parseJson(payload, "quoteText");
+
     Serial.println(payload);
+    Serial.println(quoteText);
+
   } else {
     Serial.printf("Failed, ERROR: %s\n", http.errorToString(httpCode).c_str());
     ledRed();
@@ -84,6 +89,15 @@ void ledRed()   { ledColor(255, 0, 0); }
 void ledGreen() { ledColor(0, 255, 0); }
 void ledBlue()  { ledColor(0, 0, 255); }
 
+const char* parseJson(String& json, const char* key) {
+  StaticJsonBuffer<512> jsonBuffer;
+  JsonObject& root = jsonBuffer.parseObject(json);
+  if (!root.success()) {
+    Serial.println("parseJson() failed");
+  }
+  return root[key];
+}
+
 
 void connectWifi() {
   ESP8266WiFiMulti WiFiMulti;
@@ -100,3 +114,4 @@ void connectWifi() {
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
 }
+
