@@ -1,6 +1,7 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WiFiMulti.h>
 #include <ESP8266HTTPClient.h>
+#include <ArduinoJson.h>
 
 #define RED_PIN 15
 #define GREEN_PIN 12
@@ -8,9 +9,12 @@
 #define LDR_PIN A0
 #define HTTP_PORT 443
 #define TIME_OUT 30000
+#define API_TOKEN "C4gEfUD030MMJY8ZX7p8caGBehcWGzvU"
 
 const char* ssid = "Microsoft";
 const char* password = "password";
+const char* currWeatherUrl = "http://dataservice.accuweather.com/currentconditions/v1/353981?apikey=aC4gEfUD030MMJY8ZX7p8caGBehcWGzvU&details=false";
+const char* forecastWeatherUrl = "http://dataservice.accuweather.com/forecasts/v1/daily/1day/353981?apikey=aC4gEfUD030MMJY8ZX7p8caGBehcWGzvU&metric=true";
 bool onOff = true;
 int lightLevel;
 
@@ -28,17 +32,51 @@ void setup() {
 void loop() {
   sensorLight();
 
-  delay(1000);
+  httpGet();
+
+  delay(600000);
 }
 
+// ==========================================================================
 
+void httpGet() {
+  HTTPClient http;
+  http.begin(forecastWeatherUrl);
+  int httpCode = http.GET();
+
+  if (httpCode > 0) {
+    String payload = http.getString();
+    yield();
+    Serial.println(payload);
+    yield();
+    parseJson(payload, "Headline");
+    blinkLed(0, 255, 0, 100, 7);
+  } else {
+    Serial.printf("Failed, ERROR: %s\n", http.errorToString(httpCode).c_str());
+    blinkLed(255, 0, 0, 200, 10);
+  }
+
+  http.end();
+}
+
+const char* parseJson(String& json, const char* key) {
+  StaticJsonBuffer<2048> jsonBuffer;
+  JsonObject& root = jsonBuffer.parseObject(json);
+  if (!root.success()) {
+    Serial.println("parseJson() failed");
+  }
+  const char* result = root["DailyForecasts"]["Temperature"]["Maximum"]["Value"];
+  Serial.print("result");
+  Serial.println(result);
+  return result; // NOTE: chars returned here don't work
+}
 
 // ==========================================================================
 
 void sensorLight() {
   lightLevel = analogRead(LDR_PIN);
 
-  Serial.print("lightLevel: "); Serial.println(lightLevel);
+  // Serial.print("lightLevel: "); Serial.println(lightLevel);
 
   yield();
 
