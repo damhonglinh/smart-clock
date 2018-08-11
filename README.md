@@ -1,5 +1,5 @@
 # smart-clock
-My personal Arduino project as well as a learning workspace.
+My personal Arduino project as well as an Arduino learning playground.
 
 There are a few variants subprojects in this repo but all are to make a simple digital clock plus some interesting information.
 Some interesting information can be a quote changing every n hours, fetch from Internet; or current tempurature from
